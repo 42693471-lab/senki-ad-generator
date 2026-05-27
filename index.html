@@ -285,7 +285,7 @@ input, select { font-family: inherit; font-size: inherit; }
     <div class="panel-card">
       <div class="section-title">生成</div>
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <button class="btn btn-gen" id="btnAutoGen" onclick="doSwitchStyle()" disabled>🎲 自动生成</button>
+        <button class="btn btn-gen" id="btnAutoGen" onclick="doSwitchStyle()" disabled>🎲 自动匹配</button>
         <button class="btn btn-switch" id="btnRegen" onclick="doGenerate()" disabled>↻ 重新生成</button>
       </div>
     </div>
@@ -737,7 +737,7 @@ function updateBtns() {
   } else {
     btns.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !state.cdnUrl || !state.currentStyleId; });
     const gen = document.getElementById('btnGen'); if (gen) gen.innerHTML = 'Generate';
-    const ag = document.getElementById('btnAutoGen'); if (ag) ag.innerHTML = '🎲 自动生成';
+    const ag = document.getElementById('btnAutoGen'); if (ag) ag.innerHTML = '🎲 自动匹配';
   }
 }
 
