@@ -57,7 +57,7 @@ input, select { font-family: inherit; font-size: inherit; }
 
 /* Upload area */
 .upload-area {
-  width: 100%; aspect-ratio: 3/4; border: 2px dashed var(--sage);
+  width: 100%; height: 100%; border: 2px dashed var(--sage);
   border-radius: var(--radius); cursor: pointer; position: relative; overflow: hidden;
   background: var(--card); display: flex; align-items: center; justify-content: center;
   transition: all 0.25s;
@@ -110,7 +110,7 @@ input, select { font-family: inherit; font-size: inherit; }
   position: relative; overflow: hidden;
 }
 .canvas-frame {
-  width: 100%; max-width: 420px; aspect-ratio: 3/4;
+  height: 100%; aspect-ratio: 3/4;
   background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; position: relative;
 }
 .canvas-frame.generating { box-shadow: 0 0 40px rgba(232,160,180,0.2); }
