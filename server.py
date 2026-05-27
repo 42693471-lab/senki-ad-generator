@@ -23,10 +23,9 @@ AK = os.environ.get("LOVART_ACCESS_KEY", "")
 SK = os.environ.get("LOVART_SECRET_KEY", "")
 DS_KEY = os.environ.get("DEEPSEEK_API_KEY", "sk-ea9723f06e63409ba6ed583c74172393")
 if not AK or not SK:
-    print("ERROR: LOVART_ACCESS_KEY and LOVART_SECRET_KEY must be set.")
-    sys.exit(1)
+    print("WARNING: LOVART_ACCESS_KEY and LOVART_SECRET_KEY not set. API calls will fail.")
 
-skill = AgentSkill(base_url="https://lgw.lovart.ai", access_key=AK, secret_key=SK, timeout=600)
+skill = AgentSkill(base_url="https://lgw.lovart.ai", access_key=AK, secret_key=SK, timeout=600) if AK and SK else None
 state = LocalState()
 
 # Style id → DeepSeek matching keywords
@@ -173,6 +172,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 "threads": threads,
             })
         if path == "/api/mode":
+            if not self._check_skill(): return
             return self._json(skill.query_mode())
         if path.startswith("/generated/"):
             return super().do_GET()
@@ -191,6 +191,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if path == "/api/poll":
             return self._handle_poll(body)
         if path == "/api/set-mode":
+            if not self._check_skill(): return
             if body.get("mode") == "fast":
                 skill.set_mode(unlimited=False)
             else:
@@ -200,6 +201,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     # ── helpers ───────────────────────────────────────────────────
+
+    def _check_skill(self) -> bool:
+        """Return True if skill is available, else send error and return False."""
+        if skill is None:
+            self._json({"error": True, "message": "Lovart 凭证未设置，请在 Railway Variables 中添加 LOVART_ACCESS_KEY 和 LOVART_SECRET_KEY"})
+            return False
+        return True
 
     def _read_body(self) -> str:
         length = int(self.headers.get("Content-Length", 0))
@@ -227,6 +235,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
 
     def _handle_upload(self):
+        if not self._check_skill(): return
         """Handle multipart file upload → CDN."""
         content_type = self.headers.get("Content-Type", "")
         if "multipart/form-data" not in content_type:
@@ -285,6 +294,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self._json({"error": True, "message": str(e)})
 
     def _handle_generate(self, body: dict):
+        if not self._check_skill(): return
         """Send prompt (non-blocking) → return thread_id immediately. Client polls /api/poll."""
         prompt = body.get("prompt", "")
         attachments = body.get("attachments", [])
@@ -314,6 +324,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             return self._json({"error": True, "message": msg})
 
     def _handle_poll(self, body: dict):
+        if not self._check_skill(): return
         """Poll thread result, download artifacts when ready."""
         tid = body.get("thread_id", "")
         try:
