@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SENKI</title>
+<style>
+:root {
+  --bg: #faf8f3; --panel: #fff; --card: #faf8f3;
+  --sage: #d1d8c6; --sage-dark: #9cab70; --pink: #eac4b3; --pink-btn: #e8a0b4;
+  --border: #e8e3d8; --text: #2d2d2d; --text2: #8c8278; --text3: #bfb8ad;
+  --dark-card: #2a2520; --red: #d4756b; --green: #7ba587;
+  --radius: 14px; --radius-sm: 8px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "PingFang SC", sans-serif;
+  background: var(--bg); color: var(--text); min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; cursor: pointer; border: none; font-size: inherit; }
+input, select { font-family: inherit; font-size: inherit; }
+
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 64px; background: var(--panel);
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50;
+}
+.logo { font-size: 28px; font-weight: 800; letter-spacing: 6px; color: var(--text); display: flex; align-items: center; gap: 12px; }
+.logo-img { height: 36px; width: auto; }
+.header-right { display: flex; align-items: center; gap: 16px; }
+.badge-count {
+  font-size: 13px; color: var(--text2); background: var(--sage);
+  padding: 6px 14px; border-radius: 99px; font-weight: 500;
+}
+.btn-header {
+  padding: 8px 18px; border-radius: 99px; font-size: 13px; font-weight: 500;
+  color: var(--text2); transition: all 0.2s;
+}
+.btn-header:hover { background: var(--sage); color: var(--text); }
+.btn-header.danger:hover { background: #fce4e4; color: var(--red); }
+
+/* ── Main Layout ── */
+.main-layout {
+  max-width: 1440px; margin: 0 auto; padding: 32px 40px;
+  display: grid; grid-template-columns: 340px 1fr 320px; gap: 28px;
+}
+
+/* ── Left Panel ── */
+.left-panel { display: flex; flex-direction: column; gap: 20px; }
+.panel-card {
+  background: var(--panel); border-radius: var(--radius);
+  border: 1px solid var(--border); padding: 24px;
+}
+
+/* Upload area */
+.upload-area {
+  width: 100%; aspect-ratio: 3/4; border: 2px dashed var(--sage);
+  border-radius: var(--radius); cursor: pointer; position: relative; overflow: hidden;
+  background: var(--card); display: flex; align-items: center; justify-content: center;
+  transition: all 0.25s;
+}
+.upload-area:hover { border-color: var(--sage-dark); background: rgba(209,216,198,0.15); }
+.upload-area.has-img { border-style: solid; border-color: var(--sage-dark); }
+.upload-area img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.upload-area .ph { display: flex; flex-direction: column; align-items: center; gap: 10px; color: var(--text3); }
+.upload-area .ph svg { width: 36px; height: 36px; opacity: 0.2; }
+.upload-area .ph span { font-size: 13px; }
+.upload-area .change-tag {
+  position: absolute; top: 10px; right: 10px; z-index: 2;
+  background: rgba(0,0,0,0.6); color: #fff;
+  border-radius: 20px; padding: 4px 12px; font-size: 11px; cursor: pointer; display: none;
+}
+.upload-area.has-img .change-tag { display: block; }
+.upload-area input { display: none; }
+
+/* Style info */
+.style-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; background: var(--pink); border-radius: 99px;
+  font-size: 13px; font-weight: 600; color: var(--text);
+}
+.style-tag .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--sage-dark); }
+
+/* Buttons */
+.btn {
+  width: 100%; padding: 16px 20px; border: none; border-radius: var(--radius-sm);
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none !important; }
+.btn-gen { background: var(--pink-btn); color: #fff; font-size: 16px; letter-spacing: 1px; }
+.btn-gen:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+.btn-switch {
+  background: var(--panel); color: var(--text); border: 1px solid var(--border);
+}
+.btn-switch:hover:not(:disabled) { background: var(--sage); border-color: var(--sage-dark); }
+.btn-outline {
+  background: transparent; color: var(--text2); border: 1px solid var(--border);
+}
+.btn-outline:hover { background: var(--sage); color: var(--text); }
+
+/* ── Center Canvas ── */
+.center-area { display: flex; flex-direction: column; gap: 16px; }
+.canvas-card {
+  flex: 1; background: var(--dark-card); border-radius: var(--radius);
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden; min-height: 500px;
+}
+.canvas-frame {
+  width: 100%; max-width: 420px; aspect-ratio: 3/4;
+  background: #1a1a1a; border-radius: 8px; overflow: hidden; position: relative;
+}
+.canvas-frame.generating { box-shadow: 0 0 40px rgba(232,160,180,0.2); }
+.canvas-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.canvas-frame .empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 12px; height: 100%; color: rgba(255,255,255,0.2); text-align: center;
+}
+.canvas-frame .empty svg { width: 48px; height: 48px; opacity: 0.2; }
+.canvas-frame .empty .t1 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; }
+.canvas-frame .empty .t2 { font-size: 11px; opacity: 0.5; }
+.canvas-spinner { width: 36px; height: 36px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--pink-btn); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 8px auto; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.canvas-frame .badge {
+  position: absolute; top: 12px; left: 12px;
+  background: var(--pink-btn); color: #fff; font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.canvas-frame .lock-btn {
+  position: absolute; top: 12px; right: 12px; z-index: 5;
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.5);
+  color: #fff; cursor: pointer; font-size: 14px;
+  backdrop-filter: blur(8px); transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.canvas-frame .lock-btn:hover { background: rgba(0,0,0,0.7); }
+.canvas-frame .lock-btn.locked { background: var(--pink-btn); border-color: var(--pink-btn); }
+.canvas-frame .hover-bar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+  padding: 16px; display: flex; gap: 8px; justify-content: center;
+  opacity: 0; transition: opacity 0.25s;
+}
+.canvas-frame:hover .hover-bar { opacity: 1; }
+.hover-bar button {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08);
+  color: #fff; cursor: pointer; font-size: 16px;
+  backdrop-filter: blur(12px); transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.hover-bar button:hover { background: rgba(255,255,255,0.2); }
+
+.canvas-actions { display: flex; gap: 12px; }
+.canvas-actions .btn { flex: 1; }
+
+/* ── Right Panel ── */
+.right-panel { display: flex; flex-direction: column; gap: 20px; }
+.section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--text3); margin-bottom: 14px;
+}
+
+/* Quick styles grid */
+.style-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; max-height: 280px; overflow-y: auto;
+}
+.style-chip {
+  padding: 10px 12px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 500;
+  text-align: center; cursor: pointer; border: 1px solid var(--border);
+  background: var(--panel); color: var(--text2); transition: all 0.15s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.style-chip:hover { border-color: var(--sage-dark); background: var(--sage); color: var(--text); }
+.style-chip.active { border-color: var(--pink-btn); background: rgba(232,160,180,0.1); color: var(--text); font-weight: 600; }
+
+/* ── History Drawer ── */
+.history-drawer {
+  position: fixed; right: 0; top: 0; bottom: 0; width: 480px; z-index: 100;
+  background: var(--panel); border-left: 1px solid var(--border);
+  display: flex; flex-direction: column; transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+.history-drawer.open { transform: translateX(0); }
+.history-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 99;
+  opacity: 0; pointer-events: none; transition: opacity 0.3s;
+}
+.history-overlay.open { opacity: 1; pointer-events: auto; }
+.history-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+}
+.history-head h3 { font-size: 15px; font-weight: 600; }
+.history-head button {
+  background: none; border: 1px solid var(--border); color: var(--text2);
+  padding: 6px 14px; border-radius: 8px; cursor: pointer; font-size: 12px;
+}
+.history-head button:hover { color: var(--text); border-color: var(--text2); }
+.history-grid {
+  flex: 1; overflow-y: auto; padding: 20px;
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
+.history-item {
+  aspect-ratio: 3/4; background: var(--card); border-radius: 10px;
+  overflow: hidden; cursor: pointer; border: 1px solid var(--border);
+  position: relative; transition: border-color 0.2s;
+}
+.history-item:hover { border-color: var(--text2); }
+.history-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.history-item .h-badge {
+  position: absolute; bottom: 8px; left: 8px;
+  background: rgba(0,0,0,0.8); color: #fff; font-size: 9px;
+  padding: 2px 6px; border-radius: 4px; font-weight: 600;
+}
+.history-empty {
+  grid-column: span 2; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px;
+  padding: 60px 20px; color: var(--text3);
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 200;
+  padding: 12px 20px; border-radius: 10px; font-size: 13px; color: #fff;
+  animation: slideIn 0.3s ease; backdrop-filter: blur(20px);
+}
+.toast.ok { background: rgba(123,165,135,0.9); }
+.toast.err { background: rgba(212,117,107,0.9); }
+@keyframes slideIn { from { opacity:0; transform: translateY(12px); } }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--sage-dark); border-radius: 4px; }
+
+@media (max-width: 1100px) {
+  .main-layout { grid-template-columns: 1fr; padding: 20px; gap: 20px; }
+  .left-panel, .right-panel { max-width: 100%; }
+  .canvas-card { min-height: 350px; }
+  .header { padding: 0 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo"><img src="logo.png" alt="SENKI" class="logo-img">SENKI</div>
+  <div class="header-right">
+    <span class="badge-count" id="file-count">0 张图片</span>
+    <button class="btn-header" onclick="pickFiles()">添加图片</button>
+    <button class="btn-header" onclick="pickFolder()">选择文件夹</button>
+    <button class="btn-header danger" onclick="resetAll()">清空</button>
+  </div>
+</header>
+
+<!-- Main Layout -->
+<div class="main-layout">
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <!-- Upload -->
+    <div class="panel-card">
+      <div class="section-title">Product Image</div>
+      <label for="fileInput" class="upload-area" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(this)" style="position:absolute;width:0;height:0;opacity:0;">
+        <div id="uploadPlaceholder" class="ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17,8 12,3 7,8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>上传产品图</span>
+        </div>
+        <img id="uploadPreview" style="display:none">
+        <button class="change-tag" onclick="event.stopPropagation(); resetAll()">✕ 更换</button>
+      </label>
+    </div>
+
+    <!-- Style Info -->
+    <div class="panel-card" id="vlmInfo" style="display:none;">
+      <div class="section-title">当前风格</div>
+      <div class="style-tag" id="currentStyleTag"><span class="dot"></span><span id="currentStyleName">—</span></div>
+    </div>
+
+    <!-- Generate Buttons -->
+    <div class="panel-card">
+      <div class="section-title">生成</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-gen" id="btnAutoGen" onclick="doSwitchStyle()" disabled>🎲 自动生成</button>
+        <button class="btn btn-switch" id="btnRegen" onclick="doGenerate()" disabled>↻ 重新生成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center Canvas -->
+  <div class="center-area">
+    <div class="canvas-card" id="canvasWrap">
+      <div class="canvas-frame" id="canvasFrame">
+        <div class="empty">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+          <div class="t1">Upload to begin</div>
+          <div class="t2">上传产品图 · 自动匹配风格 · 生成广告图</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel">
+    <!-- Quick Style Picker -->
+    <div class="panel-card">
+      <div class="section-title">快速选风格</div>
+      <div class="style-grid" id="styleGrid"></div>
+    </div>
+
+    <!-- Generate Actions -->
+    <div class="panel-card">
+      <div class="section-title">操作</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <button class="btn btn-gen" id="btnGen" onclick="doGenerate()" disabled>Generate</button>
+        <button class="btn btn-switch" id="btnSwitch" onclick="doSwitchStyle()" disabled>↻ 换风格</button>
+        <button class="btn btn-outline" onclick="toggleHistory()">⏱ 历史记录 (<span id="historyCount">0</span>)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- History Drawer -->
+<div class="history-overlay" id="historyOverlay" onclick="toggleHistory()"></div>
+<div class="history-drawer" id="historyDrawer">
+  <div class="history-head">
+    <h3>History</h3>
+    <button onclick="clearHistory()">Clear All</button>
+  </div>
+  <div class="history-grid" id="historyGrid">
+    <div class="history-empty">No generations yet</div>
+  </div>
+</div>
+
+<script>
+const API = location.origin;
+
+// ══════════════════════════════════════════
+// 64 Styles
+// ══════════════════════════════════════════
+const CATEGORIES = [
+  { id:'nature', name:'自然仿生', styles:[
+    {id:'NB1',name:'Frozen Glacial',cn:'冰封冰川',prompt:'(Extreme detail), product encased in a block of cracked translucent glacial ice, hyper-realistic air bubbles and frost patterns, cold backlighting (5600K), internal light scattering, 100mm Macro, F4.0.'},
+    {id:'NB2',name:'Desert Zenith',cn:'沙漠之巅',prompt:'Fine ripple sand dunes, golden hour lighting, long cinematic shadows, soft sand particles on the product base, warm color grading, sharp focus on typography, F5.6.'},
+    {id:'NB3',name:'Mossy Monolith',cn:'苔藓巨石',prompt:'Dark volcanic rock base covered in vibrant green velvet moss, mist environment, top-down softbox lighting, humid atmosphere, macro focus on moss texture and product edge.'},
+    {id:'NB4',name:'Floating Lotus',cn:'浮莲禅意',prompt:'Zen water garden, product resting on a giant lily pad, concentric water ripples, soft morning mist, diffused natural light, pastel color palette, 3:4 portrait.'},
+    {id:'NB5',name:'Volcanic Basalt',cn:'火山玄武岩',prompt:'Black jagged basalt stones, subtle steam, rim lighting to highlight product silhouette, obsidian reflections, dramatic high-contrast lighting, 8k resolution.'},
+    {id:'NB6',name:'Dewy Morning',cn:'晨露微光',prompt:'High-speed photography capturing a single water drop hitting the product, crown-shaped splash, soft focus flower petals in background, bright and airy, refreshing vibe.'},
+    {id:'NB7',name:'Autumn Amber',cn:'秋日琥珀',prompt:'Warm wood background, floating dried maple leaves, bokeh of amber light, cozy atmosphere, Rembrandt lighting on the product, high-end furniture textures.'},
+    {id:'NB8',name:'Salt Crystal',cn:'盐晶透亮',prompt:'Raw pink Himalayan salt crystals, translucent material, refracted light through crystals, minimalist white background, clean and pure aesthetic.'},
+  ]},
+  { id:'arch', name:'现代建筑', styles:[
+    {id:'AR1',name:'Brutalist Concrete',cn:'粗野混凝土',prompt:'Raw grey concrete slab, minimalist architectural lines, hard shadows, industrial chic, neutral tones, 100mm Macro capturing the contrast of smooth bottle vs rough stone.'},
+    {id:'AR2',name:'Arched Portal',cn:'拱门层叠',prompt:'Neo-classical archway shadows, layered spatial depth, soft plaster texture, terracotta and cream tones, elegant composition, focal length 100mm.'},
+    {id:'AR3',name:'Spiral Stair',cn:'旋转楼梯',prompt:'Curving architectural staircase background, dynamic leading lines, product placed at the golden ratio point, soft cinematic lighting from above.'},
+    {id:'AR4',name:'Marble Gallery',cn:'大理石画廊',prompt:'Intersection of Carrara marble and dark walnut wood, museum-grade spotlights, high-gloss reflections on the floor, luxury retail atmosphere.'},
+    {id:'AR5',name:'Plaster Curve',cn:'石膏曲线',prompt:'Abstract white plaster waves, soft chiaroscuro, organic shapes, seamless transition between light and shadow, serene and calm.'},
+    {id:'AR6',name:'Terrazzo Play',cn:'水磨石趣',prompt:'Modern multi-colored terrazzo, soft diffused light, playful but high-end, clean product placement, vibrant but professional color balance.'},
+    {id:'AR7',name:'Glass Brick',cn:'玻璃砖墙',prompt:'90s retro glass block wall, distorted light patterns, colorful refraction, dreamy blurry background, soft glow on the product edges.'},
+    {id:'AR8',name:'Step Symmetry',cn:'阶梯对称',prompt:'Symmetrical concrete steps, sharp geometry, product at the peak, hero shot composition, high-fashion editorial style.'},
+  ]},
+  { id:'optic', name:'光学物理', styles:[
+    {id:'OP1',name:'Venetian Blind',cn:'百叶窗影',prompt:'Classic blind shadows across the product, 45-degree light angle, dust motes in light beams, cinematic storytelling, warm sun-drenched vibe.'},
+    {id:'OP2',name:'Prism Spectral',cn:'棱镜光谱',prompt:'Crystal prism on the side, rainbow light dispersion across the product, 8k resolution, chromatic aberration at the edges, ethereal beauty.'},
+    {id:'OP3',name:'Caustic Pool',cn:'焦散水纹',prompt:'Pool water light patterns (caustics) projected on the product, turquoise and white light, summer vibe, wet-look product surface.'},
+    {id:'OP4',name:'Soft Leaf Shadow',cn:'棕榈叶影',prompt:'Dappled sunlight through palm leaves, tropical luxury, warm highlights, organic shadow patterns, vacation mood.'},
+    {id:'OP5',name:'Anamorphic Flare',cn:'变形耀斑',prompt:'Horizontal blue lens flare, cinematic sci-fi lighting, dark background, high-gloss product surface, futuristic premium.'},
+    {id:'OP6',name:'Polarized Oil',cn:'偏光油膜',prompt:'Iridescent oil film on water surface, swirling rainbow colors, macro oil droplets, mesmerizing textures, creative makeup vibe.'},
+    {id:'OP7',name:'Rim Light Noir',cn:'边缘光暗',prompt:'Pitch black background, dual rim lights (blue and orange), highlighting bottle curvature, invisible product body, extreme mystery.'},
+    {id:'OP8',name:'Golden Hour Glow',cn:'黄金时刻',prompt:'Warm 3200K low-angle sun, long shadows, lens flare, high-end lifestyle editorial, soft skin-tone background.'},
+  ]},
+  { id:'lab', name:'实验室科技', styles:[
+    {id:'SL1',name:'Petri Dish Pop',cn:'培养皿矩阵',prompt:'Product surrounded by glass petri dishes, gel textures, microscopic bubble details, sterile white lighting, biotech aesthetic.'},
+    {id:'SL2',name:'Liquid Nitrogen',cn:'液氮迷雾',prompt:'Heavy white fog flowing at the base, frozen metal surface, cold blue accent lights, high-tech preservation, ultra-clean.'},
+    {id:'SL3',name:'Blue Laser',cn:'蓝色激光',prompt:'Sharp horizontal blue laser line scanning the product, dark tech background, data visualization elements, cutting-edge efficacy.'},
+    {id:'SL4',name:'Centrifuge Motion',cn:'离心动态',prompt:'Circular motion blur in the background, product remains perfectly sharp, dynamic energy, laboratory speed, 100mm Macro.'},
+    {id:'SL5',name:'Copper & Steel',cn:'铜铁质感',prompt:'Industrial lab tubes, copper accents, brushed steel background, steampunk-lite, sophisticated engineering vibe.'},
+    {id:'SL6',name:'Holographic Grid',cn:'全息网格',prompt:'3D digital grid projected on the product, cyberpunk UI elements, neon blue and violet, future of skincare.'},
+    {id:'SL7',name:'Bubbling Beaker',cn:'气泡烧杯',prompt:'Effervescent oxygen bubbles rising in clear liquid, macro photography, high-speed shutter, active ingredient visualization.'},
+    {id:'SL8',name:'Silver Vacuum',cn:'银箔真空',prompt:'Space-age aluminum foil background, crinkled texture, metallic reflections, high-tech packaging aesthetic.'},
+  ]},
+  { id:'surreal', name:'超现实空间', styles:[
+    {id:'SU1',name:'Anti-Gravity',cn:'反重力悬浮',prompt:'Product and liquid spheres floating in a zero-gravity white void, perfect symmetry, surreal and clean, 8k resolution.'},
+    {id:'SU2',name:'Silk Ribbon',cn:'丝绸缎带',prompt:'A single floating silk ribbon wrapping around the bottle, fluid motion, soft satin texture, pastel background.'},
+    {id:'SU3',name:'Cloud Kingdom',cn:'云端王国',prompt:'Product resting on hyper-realistic puffy white clouds, blue sky background, soft and dreamlike, air-light texture.'},
+    {id:'SU4',name:'Melting Mirror',cn:'熔融镜面',prompt:'Product on a liquid silver surface that ripples like water, distorted reflections, surreal liquid metal vibe.'},
+    {id:'SU5',name:'Geometric Float',cn:'几何悬浮',prompt:'Spheres and cubes in marble and glass floating around the product, Bauhaus-inspired balance, avant-garde.'},
+    {id:'SU6',name:'Infinite Room',cn:'无限镜屋',prompt:'Product in a hallway of mirrors, infinite recursive reflections, depth of field, optical illusion.'},
+    {id:'SU7',name:'Paper Fold',cn:'纸艺折痕',prompt:'Origami-style sharp paper folds, pure white shadows, minimalist craft, tactile paper texture.'},
+    {id:'SU8',name:'Bubble Sphere',cn:'气泡球体',prompt:'Product inside a giant soap bubble with iridescent swirls, floating in a clean studio, fragile beauty.'},
+  ]},
+  { id:'texture', name:'材质特写', styles:[
+    {id:'TM1',name:'Whipped Cream',cn:'打发奶油',prompt:'Product emerging from a swirl of thick, luxurious white cream, macro peaks and valleys, edible texture.'},
+    {id:'TM2',name:'Honey Drip',cn:'蜂蜜滴落',prompt:'Thick amber liquid dripping slowly down the side of the bottle, backlight highlighting the viscosity, warm and rich.'},
+    {id:'TM3',name:'Crushed Pigment',cn:'碾碎色粉',prompt:'Explosions of colorful eyeshadow powder in the background, sharp grit texture, vibrant saturated colors.'},
+    {id:'TM4',name:'Velvet Lush',cn:'丝绒浓郁',prompt:'Deep burgundy velvet background, light-absorbing material, heavy luxury, premium tactile feel.'},
+    {id:'TM5',name:'Smeared Logic',cn:'涂抹笔触',prompt:'Artfully smeared lipstick or cream on the surface, painterly brushstrokes, product placed next to the texture.'},
+    {id:'TM6',name:'Crystal Clear',cn:'水晶果冻',prompt:'Product on a bed of transparent jelly cubes, light passing through perfectly, refreshing and hydrating.'},
+    {id:'TM7',name:'Gold Leaf',cn:'金箔碎片',prompt:'Real 24k gold flakes floating in the air, warm luxury lighting, prestige positioning.'},
+    {id:'TM8',name:'Carbonated Fizz',cn:'碳酸气泡',prompt:'Intense micro-bubbles clinging to the bottle, soda-like freshness, macro clarity.'},
+  ]},
+  { id:'lifestyle', name:'生活方式', styles:[
+    {id:'LS1',name:'Parisian Cafe',cn:'巴黎咖啡馆',prompt:'Marble bistro table, blurred croissant and espresso, soft morning sun, effortless chic.'},
+    {id:'LS2',name:'Silk Bedding',cn:'真丝床品',prompt:'Product on a messy silk pillowcase, morning light, intimate and cozy, luxury home vibe.'},
+    {id:'LS3',name:'Boudoir Mirror',cn:'闺房镜影',prompt:'Reflection of the product in an antique gold mirror, soft focus bathroom background, romantic.'},
+    {id:'LS4',name:'Jet-set Travel',cn:'私人飞机',prompt:'Product on a leather tray inside a private jet, window view of clouds, ultimate wealth.'},
+    {id:'LS5',name:'Skincare Sanctuary',cn:'护肤圣殿',prompt:'Modern minimalist bathroom, stone sink, steam in the air, spa-at-home atmosphere.'},
+    {id:'LS6',name:'Midnight Party',cn:'午夜派对',prompt:'Glitter on the table, blurred champagne glass, party lights, high-glam nightlife.'},
+    {id:'LS7',name:'Weekend Escape',cn:'周末逃离',prompt:'Inside a canvas tote bag, straw hat, beach sand, outdoor natural light.'},
+    {id:'LS8',name:'Tennis Club',cn:'网球俱乐部',prompt:'White pleats, green court background, preppy aesthetic, clean and athletic.'},
+  ]},
+  { id:'art', name:'艺术流派', styles:[
+    {id:'AH1',name:'Vermeer Light',cn:'维米尔光',prompt:'Single side-light source, deep shadows, classic oil painting texture, timeless elegance.'},
+    {id:'AH2',name:'Bauhaus Primary',cn:'包豪斯原色',prompt:'Stark red, blue, and yellow geometric blocks, rigid grid, modernist design.'},
+    {id:'AH3',name:'Cyberpunk Neon',cn:'赛博朋克霓虹',prompt:'Pink and cyan neon lights, rainy street reflections in background, futuristic.'},
+    {id:'AH4',name:'Monet Garden',cn:'莫奈花园',prompt:'Soft blurred Impressionist flowers, dappled light, pastel oil strokes.'},
+    {id:'AH5',name:'Pop Art Contrast',cn:'波普艺术',prompt:'High-saturation flat color background (Yellow/Magenta), bold outlines, Warhol style.'},
+    {id:'AH6',name:'Ukiyo-e Wave',cn:'浮世绘浪',prompt:'Stylized blue and white waves, flat graphic aesthetic, Japanese woodblock inspiration.'},
+    {id:'AH7',name:'Minimalist Ink',cn:'极简水墨',prompt:'Zen ink wash, negative space (Ma-style), subtle grey gradients, spiritual.'},
+    {id:'AH8',name:'Techno-Glow',cn:'科技光轨',prompt:'Electronic circuit light trails, glowing green and white, high-performance tech.'},
+  ]}
+];
+const ALL_STYLES = {};
+CATEGORIES.forEach(c => c.styles.forEach(s => ALL_STYLES[s.id] = { ...s, category: c.name }));
+
+// ══════════════════════════════════════════
+// State
+// ══════════════════════════════════════════
+let state = {
+  cdnUrl: null,
+  currentStyleId: null,
+  usedStyleIds: new Set(),
+  vlmResult: null,
+  mode: 'fast',
+  generating: false,
+  history: [],
+  historyIdCounter: 0,
+};
+
+try { state.history = JSON.parse(localStorage.getItem('lovart_history') || '[]'); state.historyIdCounter = state.history.length; } catch(e) {}
+function saveHistory() { localStorage.setItem('lovart_history', JSON.stringify(state.history)); }
+
+// Safe fetch — handles non-JSON / empty responses gracefully
+async function apiFetch(url, opts) {
+  let resp;
+  try {
+    resp = await fetch(url, opts);
+  } catch(e) {
+    throw new Error('网络连接失败，请检查网络后重试');
+  }
+  if (!resp.ok) {
+    const txt = await resp.text().catch(() => '');
+    throw new Error(`服务器错误 (${resp.status}): ${txt.slice(0, 100)}`);
+  }
+  const txt = await resp.text().catch(() => '');
+  if (!txt || !txt.trim()) {
+    throw new Error('服务器返回空响应，隧道可能超时，请重试');
+  }
+  try {
+    return JSON.parse(txt);
+  } catch(e) {
+    throw new Error('服务器返回异常数据: ' + txt.slice(0, 80));
+  }
+}
+function updateHistoryCount() { document.getElementById('historyCount').textContent = state.history.length; }
+
+// ══════════════════════════════════════════
+// Upload
+// ══════════════════════════════════════════
+function handleUpload(input) {
+  const file = input.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    document.getElementById('uploadPreview').src = e.target.result;
+    document.getElementById('uploadPreview').style.display = 'block';
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    document.getElementById('uploadZone').classList.add('has-img');
+  };
+  r.readAsDataURL(file);
+  uploadToCDN(file);
+}
+
+async function uploadToCDN(file) {
+  styleLocked = false; lockedStyleId = null; // New product, clear lock
+  toast('Uploading...', 'ok');
+  const fd = new FormData(); fd.append('file', file);
+  try {
+    const res = await apiFetch(API+'/api/upload', {method:'POST', body:fd});
+    if (res.url) {
+      state.cdnUrl = res.url;
+      const all = CATEGORIES.flatMap(c => c.styles);
+      const s = all[Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * all.length)];
+      const cat = CATEGORIES.find(c => c.styles.some(st => st.id === s.id));
+      selectedCategory = cat.id;
+      state.currentStyleId = s.id;
+      document.getElementById('vlmInfo').style.display = 'block';
+      document.getElementById('currentStyleName').textContent = cat.name + ' · ' + s.cn;
+      document.getElementById('btnGen').disabled = false;
+      renderStyleGrid();
+      toast('Ready — '+s.cn, 'ok');
+      doGenerate();
+    } else {
+      toast('Upload failed', 'err');
+    }
+  } catch(e) { toast('Upload error: '+e.message, 'err'); }
+}
+
+function resetAll() {
+  state.cdnUrl = null; state.currentStyleId = null; state.vlmResult = null;
+  state.usedStyleIds.clear(); state.generating = false; selectedCategory = null;
+  styleLocked = false; lockedStyleId = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('uploadPreview').style.display = 'none';
+  document.getElementById('uploadPlaceholder').style.display = 'flex';
+  document.getElementById('uploadZone').classList.remove('has-img');
+  document.getElementById('vlmInfo').style.display = 'none';
+  document.getElementById('btnGen').disabled = true;
+  document.getElementById('btnSwitch').disabled = true;
+  renderEmpty();
+  renderStyleGrid();
+}
+function pickFiles() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = () => { if (input.files[0]) { document.getElementById('fileInput').files = input.files; handleUpload(document.getElementById('fileInput')); } };
+  input.click();
+}
+async function pickFolder() {
+  try {
+    const dir = await window.showDirectoryPicker();
+    for await (const [name, handle] of dir.entries()) {
+      if (handle.kind === 'file') {
+        const file = await handle.getFile();
+        if (file.type.startsWith('image/')) {
+          document.getElementById('fileInput').files = new DataTransfer().files; // dummy
+          handleUpload({files: [file]});
+          break;
+        }
+      }
+    }
+  } catch { pickFiles(); }
+}
+
+// ══════════════════════════════════════════
+// Style Grid
+// ══════════════════════════════════════════
+let selectedCategory = null;
+let styleLocked = false;
+let lockedStyleId = null;
+
+function renderStyleGrid() {
+  const grid = document.getElementById('styleGrid');
+  grid.innerHTML = CATEGORIES.map(c => {
+    const active = selectedCategory === c.id ? ' active' : '';
+    const cnName = c.name.split(' ')[1] || c.name;
+    return `<div class="style-chip${active}" data-cat="${c.id}" onclick="pickCategory('${c.id}')" title="${c.name}">${cnName}</div>`;
+  }).join('');
+}
+function pickCategory(catId) {
+  if (!state.cdnUrl || state.generating) return;
+  if (styleLocked && lockedStyleId) {
+    state.currentStyleId = lockedStyleId;
+    const s = ALL_STYLES[lockedStyleId];
+    const cat = CATEGORIES.find(c => c.styles.some(st => st.id === lockedStyleId));
+    selectedCategory = cat.id;
+    document.getElementById('currentStyleName').textContent = '🔒 ' + (cat.name) + ' · ' + s.cn;
+    document.getElementById('vlmInfo').style.display = 'block';
+    renderStyleGrid();
+    doGenerate();
+    return;
+  }
+  selectedCategory = catId;
+  const cat = CATEGORIES.find(c => c.id === catId);
+  const styles = cat.styles;
+  const s = styles[Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * styles.length)];
+  state.currentStyleId = s.id;
+  document.getElementById('currentStyleName').textContent = cat.name + ' · ' + s.cn;
+  document.getElementById('vlmInfo').style.display = 'block';
+  document.getElementById('btnGen').disabled = false;
+  renderStyleGrid();
+  doGenerate();
+}
+
+// ══════════════════════════════════════════
+// Generate
+// ══════════════════════════════════════════
+async function doGenerate() {
+  if (!state.cdnUrl || state.generating) return;
+  if (styleLocked && lockedStyleId) { state.currentStyleId = lockedStyleId; }
+  if (!state.currentStyleId) return;
+  state.generating = true;
+  updateBtns();
+  const styleId = state.currentStyleId;
+  const s = ALL_STYLES[styleId];
+  renderGenerating();
+  const prompt = `3:4 product ad. Product unchanged, only change background/lighting to: ${s.prompt}. If the original image has any watermark, text overlay, or logo on the product or background — remove it completely.`;
+  try {
+    // Step 1: Send (non-blocking) → get thread_id
+    const sr = await apiFetch(API+'/api/generate', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({prompt, attachments:[state.cdnUrl], mode:state.mode})
+    });
+    if (sr.error || !sr.thread_id) throw new Error(sr.message||'Send failed');
+    const tid = sr.thread_id;
+    // Step 2: Poll every 3s for result
+    for (let p = 0; p < 60; p++) {
+      await new Promise(r => setTimeout(r, 3000));
+      const pr = await apiFetch(API+'/api/poll', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({thread_id: tid})
+      }).catch(() => ({status: 'running', downloaded: []}));
+      if (pr.downloaded && pr.downloaded.length > 0) {
+        const result = { url: pr.downloaded[0].url, localPath: pr.downloaded[0].local_path };
+        state.historyIdCounter++;
+        state.history.unshift({
+          id: state.historyIdCounter,
+          styleId, styleCn: s.cn, styleName: s.name,
+          localPath: result.localPath, url: result.url,
+          timestamp: Date.now(),
+        });
+        saveHistory(); updateHistoryCount();
+        renderResult(result, s);
+        document.getElementById('btnSwitch').disabled = false;
+        toast('Generated ✓', 'ok');
+        state.generating = false;
+        updateBtns();
+        return;
+      }
+      if (pr.status === 'abort') break;
+    }
+    throw new Error('生成超时，请重试');
+  } catch(e) { toast('Error: '+e.message, 'err'); renderEmpty(); }
+  state.generating = false;
+  updateBtns();
+}
+
+function doSwitchStyle() {
+  if (!state.cdnUrl || state.generating) return;
+  if (styleLocked && lockedStyleId) {
+    // Locked: keep the same style, just regenerate
+    state.currentStyleId = lockedStyleId;
+    const s = ALL_STYLES[lockedStyleId];
+    const cat = CATEGORIES.find(c => c.styles.some(st => st.id === lockedStyleId));
+    selectedCategory = cat.id;
+    document.getElementById('currentStyleName').textContent = '🔒 ' + (cat.name) + ' · ' + s.cn;
+    document.getElementById('vlmInfo').style.display = 'block';
+    renderStyleGrid();
+    doGenerate();
+    return;
+  }
+  const allStyles = CATEGORIES.flatMap(c => c.styles);
+  const newStyle = allStyles[Math.floor(crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * allStyles.length)];
+  const cat = CATEGORIES.find(c => c.styles.some(st => st.id === newStyle.id));
+  selectedCategory = cat.id;
+  state.currentStyleId = newStyle.id;
+  document.getElementById('currentStyleName').textContent = cat.name + ' · ' + newStyle.cn;
+  document.getElementById('vlmInfo').style.display = 'block';
+  document.getElementById('btnGen').disabled = false;
+  renderStyleGrid();
+  doGenerate();
+}
+
+// ══════════════════════════════════════════
+// Render
+// ══════════════════════════════════════════
+function renderGenerating() {
+  const frame = document.getElementById('canvasFrame');
+  frame.className = 'canvas-frame generating';
+  frame.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px;"><div class="canvas-spinner"></div><div style="font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:1px;">GENERATING...</div></div>`;
+}
+function renderResult(result, style) {
+  const frame = document.getElementById('canvasFrame');
+  const locked = styleLocked && lockedStyleId === style.id;
+  frame.className = 'canvas-frame';
+  frame.innerHTML = `<img src="${result.localPath ? API+'/'+result.localPath : result.url}" alt="${style.cn}">
+    <div class="badge">${style.cn}</div>
+    <button class="lock-btn${locked ? ' locked' : ''}" onclick="event.stopPropagation(); toggleLock('${style.id}')" title="${locked ? '已锁定风格 — 点击解锁' : '锁定此风格'}">${locked ? '🔒' : '🔓'}</button>
+    <div class="hover-bar"><a href="${result.localPath ? API+'/'+result.localPath : result.url}" download="senki_${style.id}.png" style="text-decoration:none;"><button>↓</button></a></div>`;
+}
+
+function toggleLock(styleId) {
+  if (styleLocked && lockedStyleId === styleId) {
+    styleLocked = false;
+    lockedStyleId = null;
+    toast('风格已解锁', 'ok');
+  } else {
+    styleLocked = true;
+    lockedStyleId = styleId;
+    const s = ALL_STYLES[styleId];
+    toast('已锁定: ' + s.cn, 'ok');
+  }
+  // Re-render with updated lock state
+  const lastResult = state.history[0];
+  if (lastResult) {
+    const s = ALL_STYLES[lastResult.styleId];
+    renderResult({url: lastResult.url, localPath: lastResult.localPath}, s);
+  }
+}
+function renderEmpty() {
+  document.getElementById('canvasFrame').className = 'canvas-frame';
+  document.getElementById('canvasFrame').innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg><div class="t1">Upload to begin</div><div class="t2">上传产品图 · 自动匹配风格 · 生成广告图</div></div>`;
+}
+function updateBtns() {
+  const btns = ['btnGen', 'btnSwitch', 'btnAutoGen', 'btnRegen'];
+  if (state.generating) {
+    btns.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = true; });
+    const gen = document.getElementById('btnGen'); if (gen) gen.innerHTML = '⟳ Generating...';
+    const ag = document.getElementById('btnAutoGen'); if (ag) ag.innerHTML = '⟳ Generating...';
+  } else {
+    btns.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = !state.cdnUrl || !state.currentStyleId; });
+    const gen = document.getElementById('btnGen'); if (gen) gen.innerHTML = 'Generate';
+    const ag = document.getElementById('btnAutoGen'); if (ag) ag.innerHTML = '🎲 自动生成';
+  }
+}
+
+// ══════════════════════════════════════════
+// History
+// ══════════════════════════════════════════
+function toggleHistory() {
+  const drawer = document.getElementById('historyDrawer');
+  const overlay = document.getElementById('historyOverlay');
+  const isOpen = drawer.classList.contains('open');
+  if (isOpen) { drawer.classList.remove('open'); overlay.classList.remove('open'); }
+  else { renderHistory(); drawer.classList.add('open'); overlay.classList.add('open'); }
+}
+function renderHistory() {
+  const grid = document.getElementById('historyGrid');
+  if (state.history.length === 0) { grid.innerHTML = '<div class="history-empty">No generations yet</div>'; return; }
+  grid.innerHTML = state.history.map(item => {
+    const src = item.localPath ? API+'/'+item.localPath : item.url;
+    const date = new Date(item.timestamp).toLocaleString('zh-CN', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<div class="history-item" onclick="loadHistoryItem('${item.id}')"><img src="${src}" alt="${item.styleCn}"><div class="h-badge">${item.styleCn} · ${date}</div></div>`;
+  }).join('');
+}
+function loadHistoryItem(id) {
+  const item = state.history.find(h => h.id == id);
+  if (!item) return;
+  const src = item.localPath ? API+'/'+item.localPath : item.url;
+  const frame = document.getElementById('canvasFrame');
+  frame.className = 'canvas-frame';
+  frame.innerHTML = `<img src="${src}" alt="${item.styleCn}"><div class="badge">${item.styleCn}</div><div class="hover-bar"><a href="${src}" download="senki_${item.styleId}.png" style="text-decoration:none;"><button>↓</button></a></div>`;
+  toggleHistory();
+}
+function clearHistory() { state.history = []; saveHistory(); updateHistoryCount(); renderHistory(); toast('History cleared', 'ok'); }
+
+// ══════════════════════════════════════════
+// Drag & Drop
+// ══════════════════════════════════════════
+const uz = document.getElementById('uploadZone');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.style.borderColor='var(--sage-dark)'; });
+uz.addEventListener('dragleave', () => { uz.style.borderColor=''; });
+uz.addEventListener('drop', e => {
+  e.preventDefault(); uz.style.borderColor='';
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    handleUpload(document.getElementById('fileInput'));
+  }
+});
+document.body.addEventListener('dragover', e => e.preventDefault());
+document.body.addEventListener('drop', e => {
+  e.preventDefault();
+  if (e.dataTransfer.files[0] && e.dataTransfer.files[0].type.startsWith('image/')) {
+    document.getElementById('fileInput').files = e.dataTransfer.files;
+    handleUpload(document.getElementById('fileInput'));
+  }
+});
+
+// ══════════════════════════════════════════
+// Toast
+// ══════════════════════════════════════════
+function toast(m, t) {
+  const ex = document.querySelector('.toast'); if (ex) ex.remove();
+  const d = document.createElement('div'); d.className = `toast ${t}`; d.textContent = m;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 3000);
+}
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if ((e.ctrlKey || e.metaKey) && e.key === 'o') { e.preventDefault(); pickFiles(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); doGenerate(); }
+});
+
+// Init
+updateHistoryCount();
+renderStyleGrid();
+</script>
+</body>
+</html>

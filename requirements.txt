@@ -1,0 +1,2 @@
+# Lovart Batch Tool — zero external dependencies (stdlib only)
+# Railway will still detect this and set up the Python runtime
