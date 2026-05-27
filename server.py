@@ -314,7 +314,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 project_id=project_id,
                 attachments=attachments if attachments else None,
                 mode=mode,
-                prefer_models={"IMAGE": ["generate_image_nano_banana_2"]},
+                prefer_models={"IMAGE": ["generate_image_gpt_image_2"]},
             )
             state.upsert_thread(tid, prompt[:50].strip())
             print(f"[send] thread={tid[:16]}...", flush=True)
