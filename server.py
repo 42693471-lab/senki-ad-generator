@@ -325,7 +325,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
     def _handle_poll(self, body: dict):
         if not self._check_skill(): return
-        """Poll thread result, download artifacts when ready."""
+        """Poll thread result, return CDN URLs immediately."""
         tid = body.get("thread_id", "")
         try:
             result = skill.get_result(tid)
@@ -338,9 +338,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             for a in item.get("artifacts", []):
                 url = a.get("content", "")
                 if url:
-                    local = download_url(url)
-                    if local:
-                        downloaded.append({"url": url, "local_path": local})
+                    downloaded.append({"url": url, "local_path": None})
 
         if downloaded:
             return self._json({"thread_id": tid, "status": "done", "downloaded": downloaded})

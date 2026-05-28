@@ -45,19 +45,20 @@ input, select { font-family: inherit; font-size: inherit; }
 .main-layout {
   max-width: 1440px; margin: 0 auto; padding: 28px 40px;
   display: grid; grid-template-columns: 340px 1fr 340px; gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 
 /* ── Left Panel ── */
-.left-panel { display: flex; flex-direction: column; gap: 20px; }
+.left-panel { display: flex; flex-direction: column; gap: 20px; height: 100%; }
+.left-panel .panel-card { flex: 1; display: flex; flex-direction: column; }
 .panel-card {
   background: var(--panel); border-radius: var(--radius);
-  border: 1px solid var(--border); padding: 20px;
+  border: 1px solid var(--border); padding: 16px;
 }
 
 /* Upload area */
 .upload-area {
-  width: 100%; aspect-ratio: 3/4; border: 2px dashed var(--sage);
+  width: 100%; flex: 1; border: 2px dashed var(--sage);
   border-radius: var(--radius); cursor: pointer; position: relative; overflow: hidden;
   background: var(--card); display: flex; align-items: center; justify-content: center;
   transition: all 0.25s;
@@ -103,14 +104,14 @@ input, select { font-family: inherit; font-size: inherit; }
 .btn-outline:hover { background: var(--sage); color: var(--text); }
 
 /* ── Center Canvas ── */
-.center-area { display: flex; flex-direction: column; align-items: center; }
+.center-area { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
 .canvas-card {
   background: transparent; border-radius: var(--radius);
   display: flex; align-items: center; justify-content: center;
-  position: relative; overflow: hidden;
+  position: relative; overflow: hidden; height: 100%; width: 100%;
 }
 .canvas-frame {
-  width: 100%; max-width: 460px; aspect-ratio: 3/4;
+  width: 100%; max-width: 460px; max-height: 100%; aspect-ratio: 3/4;
   background: var(--card); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; position: relative;
 }
 .canvas-frame.generating { box-shadow: 0 0 40px rgba(232,160,180,0.2); }
@@ -159,7 +160,9 @@ input, select { font-family: inherit; font-size: inherit; }
 .canvas-actions .btn { flex: 1; }
 
 /* ── Right Panel ── */
-.right-panel { display: flex; flex-direction: column; gap: 20px; }
+.right-panel { display: flex; flex-direction: column; gap: 20px; height: 100%; }
+.right-panel .panel-card:last-child { flex: 1; display: flex; flex-direction: column; }
+.right-panel .panel-card:last-child .style-grid { flex: 1; align-content: start; }
 .section-title {
   font-size: 11px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 1.5px; color: var(--text3); margin-bottom: 12px;
@@ -459,6 +462,25 @@ function updateHistoryCount() { document.getElementById('historyCount').textCont
 // ══════════════════════════════════════════
 // Upload
 // ══════════════════════════════════════════
+async function resizeImage(file, maxDim = 1024) {
+  // Only resize if image is larger than maxDim on either side
+  const bmp = await createImageBitmap(file);
+  if (bmp.width <= maxDim && bmp.height <= maxDim) {
+    bmp.close();
+    return file;
+  }
+  const scale = maxDim / Math.max(bmp.width, bmp.height);
+  const w = Math.round(bmp.width * scale);
+  const h = Math.round(bmp.height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(bmp, 0, 0, w, h);
+  bmp.close();
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+  return new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' });
+}
+
 function handleUpload(input) {
   const file = input.files[0]; if (!file) return;
   const r = new FileReader();
@@ -475,6 +497,7 @@ function handleUpload(input) {
 async function uploadToCDN(file) {
   styleLocked = false; lockedStyleId = null; // New product, clear lock
   toast('Uploading...', 'ok');
+  try { file = await resizeImage(file); } catch(e) { console.warn('resize failed, using original', e); }
   const fd = new FormData(); fd.append('file', file);
   try {
     const res = await apiFetch(API+'/api/upload', {method:'POST', body:fd});
@@ -594,9 +617,9 @@ async function doGenerate() {
     });
     if (sr.error || !sr.thread_id) throw new Error(sr.message||'Send failed');
     const tid = sr.thread_id;
-    // Step 2: Poll every 3s for result
+    // Step 2: Poll every 2s for result
     for (let p = 0; p < 60; p++) {
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(r => setTimeout(r, 2000));
       const pr = await apiFetch(API+'/api/poll', {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({thread_id: tid})
